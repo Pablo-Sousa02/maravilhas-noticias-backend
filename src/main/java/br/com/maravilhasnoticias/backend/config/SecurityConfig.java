@@ -2,6 +2,7 @@ package br.com.maravilhasnoticias.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -40,8 +41,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth ->
                         auth
                                 .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                                .requestMatchers("/api/categories/**", "/api/news/**").permitAll()
-                                .requestMatchers("/api/push/subscriptions").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/news/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/push/subscriptions").permitAll()
+                                .requestMatchers(HttpMethod.DELETE, "/api/push/subscriptions").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

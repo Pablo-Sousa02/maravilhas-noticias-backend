@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "Maravilhas Notícias API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8080"},
+    {"key": "token", "value": ""},
+    {"key": "categoryId", "value": ""},
+    {"key": "newsId", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"senha-segura\"\n}"},
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Listar categorias",
+      "request": {"method": "GET", "url": "{{baseUrl}}/api/categories"}
+    },
+    {
+      "name": "Criar categoria",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"name\": \"Cidade\",\n  \"active\": true\n}"},
+        "url": "{{baseUrl}}/api/admin/categories"
+      }
+    },
+    {
+      "name": "Listar notícias",
+      "request": {"method": "GET", "url": "{{baseUrl}}/api/news?page=0&size=20"}
+    },
+    {
+      "name": "Criar notícia",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}],
+        "body": {"mode": "raw", "raw": "{\n  \"title\": \"Notícia de exemplo\",\n  \"summary\": \"Resumo da notícia.\",\n  \"content\": \"Conteúdo completo.\",\n  \"featured\": false,\n  \"urgent\": false,\n  \"categoryId\": \"{{categoryId}}\"\n}"},
+        "url": "{{baseUrl}}/api/admin/news"
+      }
+    },
+    {
+      "name": "Publicar notícia",
+      "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/admin/news/{{newsId}}/publish"}
+    },
+    {
+      "name": "Health",
+      "request": {"method": "GET", "url": "{{baseUrl}}/actuator/health"}
+    }
+  ]
+}
