@@ -55,6 +55,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.CONFLICT, "Conflito", exception.getMessage());
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ProblemDetail> handleConflict(ConflictException exception) {
+        return response(HttpStatus.CONFLICT, "Conflito", exception.getMessage());
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
         return response(HttpStatus.FORBIDDEN, "Acesso negado", "Você não possui permissão para acessar este recurso");
