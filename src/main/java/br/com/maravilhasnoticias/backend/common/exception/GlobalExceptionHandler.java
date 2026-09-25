@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -63,6 +64,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
         return response(HttpStatus.FORBIDDEN, "Acesso negado", "Você não possui permissão para acessar este recurso");
+    }
+
+    @ExceptionHandler(InvalidUploadException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidUpload(InvalidUploadException exception) {
+        return response(HttpStatus.BAD_REQUEST, "Upload inválido", exception.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ProblemDetail> handleUploadSize(MaxUploadSizeExceededException exception) {
+        return response(HttpStatus.BAD_REQUEST, "Upload inválido", "A imagem excede o limite permitido");
+    }
+
+    @ExceptionHandler(ExternalServiceConfigurationException.class)
+    public ResponseEntity<ProblemDetail> handleExternalConfiguration(ExternalServiceConfigurationException exception) {
+        return response(HttpStatus.SERVICE_UNAVAILABLE, "Serviço não configurado", exception.getMessage());
     }
 
     private ResponseEntity<ProblemDetail> response(HttpStatus status, String title, String detail) {

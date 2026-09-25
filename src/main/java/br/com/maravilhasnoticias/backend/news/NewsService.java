@@ -9,6 +9,7 @@ import br.com.maravilhasnoticias.backend.news.dto.NewsRequest;
 import br.com.maravilhasnoticias.backend.news.dto.NewsResponse;
 import br.com.maravilhasnoticias.backend.user.User;
 import br.com.maravilhasnoticias.backend.user.UserRepository;
+import br.com.maravilhasnoticias.backend.push.WebPushService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,9 +24,10 @@ public class NewsService {
     private final NewsRepository newsRepository;
     private final CategoryService categoryService;
     private final UserRepository userRepository;
+    private final WebPushService webPushService;
 
-    public NewsService(NewsRepository newsRepository, CategoryService categoryService, UserRepository userRepository) {
-        this.newsRepository = newsRepository; this.categoryService = categoryService; this.userRepository = userRepository;
+    public NewsService(NewsRepository newsRepository, CategoryService categoryService, UserRepository userRepository, WebPushService webPushService) {
+        this.newsRepository = newsRepository; this.categoryService = categoryService; this.userRepository = userRepository; this.webPushService = webPushService;
     }
 
     @Transactional(readOnly = true)
@@ -73,7 +75,13 @@ public class NewsService {
         return NewsResponse.from(news);
     }
     @Transactional
-    public NewsResponse publish(UUID id) { News news = find(id); news.publish(); return NewsResponse.from(news); }
+    public NewsResponse publish(UUID id) {
+        News news = find(id);
+        boolean firstPublication = news.publish();
+        NewsResponse response = NewsResponse.from(news);
+        if (firstPublication && news.isUrgent()) webPushService.notifyUrgentNews(news);
+        return response;
+    }
     @Transactional
     public NewsResponse archive(UUID id) { News news = find(id); news.archive(); return NewsResponse.from(news); }
     @Transactional
