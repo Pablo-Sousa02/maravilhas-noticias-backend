@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,6 +43,25 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(ResourceNotFoundException exception) {
+        return response(HttpStatus.NOT_FOUND, "Recurso não encontrado", exception.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ProblemDetail> handleConflict(EmailAlreadyExistsException exception) {
+        return response(HttpStatus.CONFLICT, "Conflito", exception.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
+        return response(HttpStatus.FORBIDDEN, "Acesso negado", "Você não possui permissão para acessar este recurso");
+    }
+
+    private ResponseEntity<ProblemDetail> response(HttpStatus status, String title, String detail) {
+        return ResponseEntity.status(status).body(buildProblem(status, title, detail));
     }
 
     private ProblemDetail buildProblem(
