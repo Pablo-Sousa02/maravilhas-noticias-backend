@@ -16,17 +16,6 @@ public class GlobalExceptionHandler {
 
     private static final String FIELDS_PROPERTY = "fields";
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ProblemDetail> handleEmailAlreadyExists(
-            EmailAlreadyExistsException exception
-    ) {
-        return buildResponse(
-                HttpStatus.CONFLICT,
-                "E-mail já cadastrado",
-                exception.getMessage()
-        );
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidation(
             MethodArgumentNotValidException exception
@@ -42,12 +31,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
     }
 
-    private ResponseEntity<ProblemDetail> buildResponse(
-            HttpStatus status,
-            String title,
-            String detail
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidCredentials(
+            InvalidCredentialsException exception
     ) {
-        return ResponseEntity.status(status).body(buildProblem(status, title, detail));
+        ProblemDetail problem = buildProblem(
+                HttpStatus.UNAUTHORIZED,
+                "Credenciais inválidas",
+                exception.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 
     private ProblemDetail buildProblem(
