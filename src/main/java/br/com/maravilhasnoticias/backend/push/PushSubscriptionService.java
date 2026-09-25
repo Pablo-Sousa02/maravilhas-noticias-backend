@@ -2,6 +2,7 @@ package br.com.maravilhasnoticias.backend.push;
 
 import br.com.maravilhasnoticias.backend.push.dto.PushSubscriptionRequest;
 import br.com.maravilhasnoticias.backend.push.dto.PushSubscriptionResponse;
+import br.com.maravilhasnoticias.backend.push.dto.PushUnsubscribeRequest;
 import br.com.maravilhasnoticias.backend.user.User;
 import br.com.maravilhasnoticias.backend.user.UserRepository;
 import org.springframework.security.core.Authentication;
@@ -27,7 +28,7 @@ public class PushSubscriptionService {
         return PushSubscriptionResponse.from(repository.save(subscription));
     }
     @Transactional
-    public void unsubscribe(PushSubscriptionRequest request) {
+    public void unsubscribe(PushUnsubscribeRequest request) {
         repository.findByEndpoint(request.endpoint()).ifPresent(PushSubscription::deactivate);
     }
     private User authenticatedUser(Authentication authentication) {
