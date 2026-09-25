@@ -1,0 +1,560 @@
+{
+  "project": {
+    "name": "Maravilhas Notícias",
+    "artifact": "backend",
+    "version": "0.0.1-SNAPSHOT",
+    "description": "API REST de um portal local de notícias com administração editorial, autenticação JWT, upload de imagens e notificações Web Push.",
+    "baseUrl": "http://localhost:8080",
+    "language": "Java 21",
+    "framework": "Spring Boot 4.1.1"
+  },
+  "technologies": [
+    "Java 21",
+    "Spring Boot 4.1.1",
+    "Maven Wrapper 3.3.4",
+    "PostgreSQL",
+    "Flyway",
+    "Spring Data JPA",
+    "Hibernate",
+    "Spring Security",
+    "OAuth2 Resource Server",
+    "JWT HS256",
+    "Bean Validation",
+    "Lombok",
+    "Cloudinary",
+    "Web Push VAPID",
+    "Spring Boot Actuator",
+    "springdoc-openapi"
+  ],
+  "architecture": {
+    "style": "Arquitetura organizada por funcionalidade",
+    "packages": {
+      "auth": "Cadastro, login e emissão de tokens JWT.",
+      "user": "Usuários, perfil autenticado e bootstrap do administrador.",
+      "category": "Categorias públicas e gerenciamento administrativo.",
+      "news": "Notícias, fluxo editorial, busca, filtros e publicação.",
+      "media": "Abstração de armazenamento e integração Cloudinary.",
+      "push": "Inscrições e envio assíncrono de notificações Web Push.",
+      "config": "Spring Security, JWT, CORS, handlers de segurança e OpenAPI.",
+      "common.exception": "Exceções e tratamento centralizado com ProblemDetail.",
+      "common.util": "Utilitários compartilhados, incluindo geração de slugs."
+    },
+    "patterns": [
+      "Injeção por construtor",
+      "DTOs implementados com records",
+      "Transações na camada de serviço",
+      "Controllers sem retorno direto de entidades JPA",
+      "Repositories Spring Data JPA",
+      "Specifications para consultas dinâmicas",
+      "Configuração por variáveis de ambiente"
+    ]
+  },
+  "security": {
+    "authentication": "JWT Bearer",
+    "algorithm": "HS256",
+    "issuer": "maravilhas-noticias-api",
+    "sessionPolicy": "STATELESS",
+    "rolesClaim": "roles",
+    "authorityPrefix": "ROLE_",
+    "adminRole": "ROLE_ADMIN",
+    "adminRoutePattern": "/api/admin/**",
+    "passwordHashing": "BCrypt",
+    "csrfEnabled": false,
+    "formLoginEnabled": false,
+    "httpBasicEnabled": false,
+    "tokenValidation": [
+      "Assinatura HS256",
+      "Expiração",
+      "Issuer"
+    ],
+    "errorResponses": {
+      "missingExpiredOrInvalidToken": 401,
+      "insufficientPermission": 403
+    },
+    "publicRoutes": [
+      "POST /api/auth/register",
+      "POST /api/auth/login",
+      "GET /api/categories/**",
+      "GET /api/news/**",
+      "POST /api/push/subscriptions",
+      "DELETE /api/push/subscriptions",
+      "GET /v3/api-docs/**",
+      "GET /swagger-ui/**",
+      "GET /swagger-ui.html",
+      "GET /actuator/health",
+      "GET /actuator/info"
+    ]
+  },
+  "environmentVariables": {
+    "required": {
+      "DB_PASSWORD": "Senha do PostgreSQL.",
+      "JWT_SECRET": "Segredo Base64 correspondente a pelo menos 32 bytes aleatórios."
+    },
+    "database": {
+      "DB_URL": "URL JDBC. Padrão: jdbc:postgresql://localhost:5432/maravilhas_noticias_db",
+      "DB_USERNAME": "Usuário PostgreSQL. Padrão: postgres",
+      "DB_PASSWORD": "Senha PostgreSQL sem valor padrão."
+    },
+    "application": {
+      "JWT_SECRET": "Chave JWT Base64.",
+      "JWT_EXPIRATION_SECONDS": "Expiração do token. Padrão: 3600.",
+      "APP_CORS_ALLOWED_ORIGINS": "Origens CORS separadas por vírgula.",
+      "JPA_SHOW_SQL": "Ativa SQL detalhado. Padrão: false."
+    },
+    "adminBootstrap": {
+      "ADMIN_NAME": "Nome do administrador inicial.",
+      "ADMIN_EMAIL": "E-mail do administrador inicial.",
+      "ADMIN_PASSWORD": "Senha do administrador inicial."
+    },
+    "cloudinary": {
+      "CLOUDINARY_CLOUD_NAME": "Cloud name da conta Cloudinary.",
+      "CLOUDINARY_API_KEY": "Chave pública da API Cloudinary.",
+      "CLOUDINARY_API_SECRET": "Segredo da API Cloudinary."
+    },
+    "webPush": {
+      "VAPID_PUBLIC_KEY": "Chave pública VAPID.",
+      "VAPID_PRIVATE_KEY": "Chave privada VAPID.",
+      "VAPID_SUBJECT": "Contato VAPID, normalmente mailto ou URL."
+    },
+    "secretValuesIncluded": false
+  },
+  "database": {
+    "engine": "PostgreSQL",
+    "schemaManagement": "Flyway",
+    "hibernateDdlAuto": "validate",
+    "openInView": false,
+    "migrations": [
+      {
+        "version": 1,
+        "file": "V1__create_users_table.sql",
+        "description": "Criação da tabela de usuários."
+      },
+      {
+        "version": 2,
+        "file": "V2__create_categories_and_news.sql",
+        "description": "Criação das categorias, notícias, relacionamentos, constraints e índices."
+      },
+      {
+        "version": 3,
+        "file": "V3__create_push_subscriptions.sql",
+        "description": "Criação das inscrições push, relacionamento opcional com usuário e índices."
+      }
+    ],
+    "migrationPolicy": "Migrations executadas não devem ser modificadas; mudanças futuras devem usar V4 ou superior."
+  },
+  "domain": {
+    "user": {
+      "table": "users",
+      "fields": [
+        "id: UUID",
+        "name: String(120)",
+        "email: String(180), unique",
+        "passwordHash: String",
+        "role: USER | ADMIN",
+        "active: boolean",
+        "createdAt: OffsetDateTime",
+        "updatedAt: OffsetDateTime"
+      ]
+    },
+    "category": {
+      "table": "categories",
+      "fields": [
+        "id: UUID",
+        "name: String(100)",
+        "slug: String(120), unique",
+        "active: boolean",
+        "createdAt: OffsetDateTime",
+        "updatedAt: OffsetDateTime"
+      ],
+      "rules": [
+        "Somente categorias ativas são públicas.",
+        "O slug é normalizado sem acentos.",
+        "Uma categoria utilizada por notícias não pode ser excluída."
+      ]
+    },
+    "news": {
+      "table": "news",
+      "statuses": [
+        "DRAFT",
+        "PUBLISHED",
+        "ARCHIVED"
+      ],
+      "fields": [
+        "id: UUID",
+        "title: String(180)",
+        "slug: String(200), unique",
+        "summary: String(500)",
+        "content: TEXT",
+        "coverImageUrl: String(1000), optional",
+        "status: NewsStatus",
+        "featured: boolean",
+        "urgent: boolean",
+        "category: Category",
+        "author: User",
+        "publishedAt: OffsetDateTime, optional",
+        "createdAt: OffsetDateTime",
+        "updatedAt: OffsetDateTime"
+      ],
+      "rules": [
+        "Notícias são criadas como DRAFT.",
+        "Apenas ADMIN cria, edita, publica, arquiva ou exclui.",
+        "Leitores visualizam somente PUBLISHED.",
+        "A primeira publicação define publishedAt.",
+        "Republicar preserva a primeira data de publicação.",
+        "Slugs duplicados recebem sufixos numéricos.",
+        "Notícia urgent dispara Web Push somente na primeira publicação."
+      ]
+    },
+    "pushSubscription": {
+      "table": "push_subscriptions",
+      "fields": [
+        "id: UUID",
+        "endpoint: String(2000), unique",
+        "p256dh: String(500)",
+        "auth: String(500)",
+        "active: boolean",
+        "user: User, optional",
+        "createdAt: OffsetDateTime",
+        "updatedAt: OffsetDateTime"
+      ],
+      "rules": [
+        "Cadastro idempotente por endpoint.",
+        "Inscrição existente é atualizada e reativada.",
+        "Respostas push 404 e 410 desativam definitivamente a inscrição."
+      ]
+    }
+  },
+  "api": {
+    "contentType": "application/json",
+    "errorContentType": "application/problem+json",
+    "authenticationHeader": "Authorization: Bearer <token>",
+    "endpoints": [
+      {
+        "method": "POST",
+        "path": "/api/auth/register",
+        "access": "PUBLIC",
+        "successStatus": 201,
+        "description": "Cadastra um usuário comum."
+      },
+      {
+        "method": "POST",
+        "path": "/api/auth/login",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Valida e-mail e senha e retorna token JWT."
+      },
+      {
+        "method": "GET",
+        "path": "/api/users/me",
+        "access": "AUTHENTICATED",
+        "successStatus": 200,
+        "description": "Retorna o usuário autenticado."
+      },
+      {
+        "method": "GET",
+        "path": "/api/categories",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Lista categorias ativas."
+      },
+      {
+        "method": "GET",
+        "path": "/api/categories/{slug}",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Consulta categoria ativa pelo slug."
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/categories",
+        "access": "ADMIN",
+        "successStatus": 201,
+        "description": "Cria categoria."
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/categories/{id}",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "description": "Atualiza categoria."
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/categories/{id}",
+        "access": "ADMIN",
+        "successStatus": 204,
+        "description": "Exclui categoria não utilizada."
+      },
+      {
+        "method": "GET",
+        "path": "/api/news",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "queryParameters": ["page", "size", "sort", "category"],
+        "description": "Lista notícias publicadas."
+      },
+      {
+        "method": "GET",
+        "path": "/api/news/{slug}",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Consulta notícia publicada pelo slug."
+      },
+      {
+        "method": "GET",
+        "path": "/api/news/featured",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "queryParameters": ["page", "size", "sort"],
+        "description": "Lista notícias publicadas em destaque."
+      },
+      {
+        "method": "GET",
+        "path": "/api/news/search",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "queryParameters": ["q", "category", "page", "size", "sort"],
+        "description": "Busca notícias publicadas por título ou resumo."
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/news",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "queryParameters": ["status", "category", "page", "size", "sort"],
+        "description": "Lista notícias para administração."
+      },
+      {
+        "method": "GET",
+        "path": "/api/admin/news/{id}",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "description": "Consulta qualquer notícia pelo ID."
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/news",
+        "access": "ADMIN",
+        "successStatus": 201,
+        "description": "Cria notícia como rascunho."
+      },
+      {
+        "method": "PUT",
+        "path": "/api/admin/news/{id}",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "description": "Atualiza notícia."
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/news/{id}/publish",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "description": "Publica notícia e pode disparar Web Push."
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/admin/news/{id}/archive",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "description": "Arquiva notícia."
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/admin/news/{id}",
+        "access": "ADMIN",
+        "successStatus": 204,
+        "description": "Exclui fisicamente uma notícia."
+      },
+      {
+        "method": "POST",
+        "path": "/api/admin/uploads/images",
+        "access": "ADMIN",
+        "successStatus": 200,
+        "contentType": "multipart/form-data",
+        "description": "Envia uma imagem de até 5 MB ao Cloudinary."
+      },
+      {
+        "method": "POST",
+        "path": "/api/push/subscriptions",
+        "access": "PUBLIC_OPTIONAL_AUTH",
+        "successStatus": 201,
+        "description": "Cadastra ou atualiza inscrição push."
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/push/subscriptions",
+        "access": "PUBLIC",
+        "successStatus": 204,
+        "description": "Desativa inscrição push pelo endpoint."
+      },
+      {
+        "method": "GET",
+        "path": "/actuator/health",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Health check."
+      },
+      {
+        "method": "GET",
+        "path": "/actuator/info",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Informações públicas da aplicação."
+      },
+      {
+        "method": "GET",
+        "path": "/v3/api-docs",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Documento OpenAPI em JSON."
+      },
+      {
+        "method": "GET",
+        "path": "/swagger-ui.html",
+        "access": "PUBLIC",
+        "successStatus": 200,
+        "description": "Interface Swagger UI."
+      }
+    ]
+  },
+  "requestExamples": {
+    "login": {
+      "email": "admin@example.com",
+      "password": "senha-segura"
+    },
+    "category": {
+      "name": "Cidade",
+      "active": true
+    },
+    "news": {
+      "title": "Nova obra começa no centro",
+      "summary": "Intervenção começa nesta semana.",
+      "content": "Conteúdo completo da notícia.",
+      "coverImageUrl": "https://example.com/image.jpg",
+      "featured": true,
+      "urgent": false,
+      "categoryId": "00000000-0000-0000-0000-000000000000"
+    },
+    "pushSubscription": {
+      "endpoint": "https://push-service.example/subscription-id",
+      "keys": {
+        "p256dh": "browser-public-key",
+        "auth": "browser-auth-secret"
+      }
+    },
+    "pushUnsubscribe": {
+      "endpoint": "https://push-service.example/subscription-id"
+    }
+  },
+  "errorHandling": {
+    "format": "RFC 9457 ProblemDetail",
+    "cases": [
+      {"case": "Validation error", "status": 400},
+      {"case": "Invalid upload", "status": 400},
+      {"case": "Invalid credentials", "status": 401},
+      {"case": "Missing, expired or invalid token", "status": 401},
+      {"case": "Access denied", "status": 403},
+      {"case": "Resource not found", "status": 404},
+      {"case": "Conflict", "status": 409},
+      {"case": "External integration not configured", "status": 503}
+    ]
+  },
+  "externalIntegrations": {
+    "cloudinary": {
+      "optionalForStartup": true,
+      "configured": false,
+      "behaviorWithoutCredentials": "A aplicação inicia e o endpoint de upload retorna HTTP 503."
+    },
+    "webPush": {
+      "optionalForStartup": true,
+      "configured": false,
+      "asynchronous": true,
+      "behaviorWithoutCredentials": "A aplicação inicia, registra aviso e ignora envios."
+    }
+  },
+  "observability": {
+    "actuatorEndpoints": [
+      "health",
+      "info"
+    ],
+    "sqlLoggingDefault": false,
+    "sensitiveValuesLogged": false
+  },
+  "documentation": {
+    "readme": "README.md",
+    "implementationReport": "RELATORIO_IMPLEMENTACAO.md",
+    "environmentExample": ".env.example",
+    "postmanCollection": "postman/Maravilhas-Noticias.postman_collection.json",
+    "swaggerUrl": "http://localhost:8080/swagger-ui.html",
+    "openApiUrl": "http://localhost:8080/v3/api-docs"
+  },
+  "tests": {
+    "total": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "testClasses": [
+      "BackendApplicationTests",
+      "AuthServiceTests",
+      "SlugUtilsTests",
+      "NewsTests"
+    ],
+    "commands": [
+      ".\\mvnw test",
+      ".\\mvnw clean verify"
+    ],
+    "results": {
+      "mavenTest": "BUILD SUCCESS",
+      "mavenCleanVerify": "BUILD SUCCESS",
+      "compiledClasses": 55,
+      "executableJarGenerated": true
+    },
+    "smokeTests": [
+      {"endpoint": "GET /actuator/health", "status": 200},
+      {"endpoint": "GET /api/categories", "status": 200},
+      {"endpoint": "GET /api/news", "status": 200},
+      {"endpoint": "GET /v3/api-docs", "status": 200},
+      {"endpoint": "GET /api/admin/news without token", "status": 401},
+      {"endpoint": "POST /api/auth/login with missing fields", "status": 400}
+    ]
+  },
+  "localCommits": [
+    {"hash": "92f606a", "message": "feat: complete JWT security and admin bootstrap"},
+    {"hash": "6d3bded", "message": "feat: implement categories and news management"},
+    {"hash": "172ef8e", "message": "feat: add media upload and web push notifications"},
+    {"hash": "f97ed37", "message": "test: add backend coverage and API documentation"},
+    {"hash": "bb6c7b4", "message": "docs: complete backend setup and deployment guide"},
+    {"hash": "6598161", "message": "fix: stabilize paginated API responses"}
+  ],
+  "commands": {
+    "test": ".\\mvnw test",
+    "verify": ".\\mvnw clean verify",
+    "run": ".\\mvnw spring-boot:run",
+    "package": ".\\mvnw clean package"
+  },
+  "deploymentChecklist": [
+    "Provisionar PostgreSQL.",
+    "Configurar variáveis obrigatórias em um gerenciador de segredos.",
+    "Usar uma chave JWT diferente em cada ambiente.",
+    "Configurar origens CORS reais.",
+    "Habilitar HTTPS.",
+    "Configurar Cloudinary caso upload seja utilizado.",
+    "Configurar VAPID caso Web Push seja utilizado.",
+    "Executar o Maven clean verify.",
+    "Validar health, login, leitura pública e uma rota administrativa.",
+    "Fazer backup antes de novas migrations em produção."
+  ],
+  "pendingExternalConfiguration": [
+    "Credenciais Cloudinary para teste real de upload.",
+    "Par de chaves VAPID para teste real em navegadores.",
+    "Variáveis ADMIN_NAME, ADMIN_EMAIL e ADMIN_PASSWORD para bootstrap do primeiro administrador.",
+    "Origens CORS definitivas do ambiente de produção."
+  ],
+  "repositoryStateAtMvpDelivery": {
+    "pushPerformed": false,
+    "secretsCommitted": false,
+    "previousWorkPreserved": true,
+    "destructiveGitCommandsUsed": false
+  }
+}
